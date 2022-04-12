@@ -1,0 +1,45 @@
+{
+"update_url": "https://clients2.google.com/service/update2/crx",
+
+	"manifest_version":2,
+	"name":"Article Summary Popup Extension",
+	"version":"1.0",
+	"description":"This extension is used top popuop summary of a web article.",
+	"background":{
+		"scripts":[
+			"js/jquery-2.1.1.min.js",
+			"js/default.js",
+			"background.js"
+		]
+	},
+	"icons":{
+		"16":"img/s_16.png",
+		"128":"img/s_128.png"
+	},
+	"content_scripts":[
+		{
+		  "matches": [
+		  	"http://*/*",
+		  	"https://*/*"
+		  ],
+		  "permissions":[
+		  	"http://*/*",
+		  	"https://*/*"
+		  ],
+		  "css": [
+		  	"css/jquery.qtip.min.css",
+		  	"css/font-awesome.min.css"
+		  ],
+		  "js": [
+		  	"js/jquery-2.1.1.min.js",
+		  	"js/jquery.qtip.min.js",
+		  	"js/jquery.urldecoder.min.js",
+		  	"js/script.js"
+		  ],
+		  "run_at": "document_idle"
+		}
+	],
+	"web_accessible_resources": [
+		"fonts/*"
+	]
+}
