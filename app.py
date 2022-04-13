@@ -30,11 +30,18 @@ class PrintURL(Resource):
     try:
       url = re.sub('~', '/', url)
       summary = func(url)
-      #data = {'Summary': summary}
-      #data = json.dumps(data)
-      return jsonify({"summary": summary})
+      whitelist = set('abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890.')
+      summary = ''.join(filter(whitelist.__contains__, summary))
+      #summary = re.sub('[\W_]+', '', summary)
+      data = jsonify({'Summary': summary})
+      data.headers.add('Access-Control-Allow-Origin', '*')
+      return data
+
     except Exception as e:
-      return jsonify({"error": str(e)})
+      print(e)
+      data = jsonify({'Summary': "error"})
+      data.headers.add('Access-Control-Allow-Origin', '*')
+      return data
 
 
 # adding the defined resources along with their corresponding urls

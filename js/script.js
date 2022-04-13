@@ -1,17 +1,19 @@
 async function getText(uri) {
   var url = uri.source.replaceAll('/', '~')
 
-    await fetch(`http://127.0.0.1:5000/url/${url}`, { mode: 'no-cors'})
-    .then(res => res.json())
-    .then(out =>
-      console.log('Checkout this JSON! ', out));
-
-  // let response = await fetch(`http://127.0.0.1:5000/url/${url}`, { mode: 'no-cors'})
-  // console.log(response)
-  //let data = JSON.parse(response)
-  //console.log(data);
-  var data = "aaaaaaaaaaaaaaaaaaa"
-  return data
+    // await fetch(`http://127.0.0.1:5000/url/${url}`)
+    // .then(res => res.json())
+    // .then(out =>
+    //   console.log('Checkout this JSON! ', out));
+    // // console.log(getJSON(`http://127.0.0.1:5000/url/${url}`))
+   //   //ait fetch('https://jsonplaceholder.typicode.com/todos/1')
+   // .then(response => response.json())
+   // .then(json => console.log(json))
+  // var response = await fetch('https://jsonplaceholder.typicode.com/todos/1')
+  var response = await fetch(`http://127.0.0.1:5000/url/${url}`)
+  response = await response.json()
+  console.log(response)
+  return response.Summary
 }
 
 jQuery(function($){
