@@ -10,6 +10,9 @@ from nltk.cluster.util import cosine_distance
 from nltk.tokenize import sent_tokenize
 import numpy as np
 import networkx as nx
+from lexrank import LexRank
+from lexrank.mappings.stopwords import STOPWORDS
+from path import Path
 import re
 
 # using flask_restful
@@ -47,6 +50,32 @@ def func(url):
       to_tokenize += " "
 
   return summarize_tfidf(to_tokenize, 3)[0]
+
+#LexRank
+def func2(url):
+    response = requests.get(url)
+    doc = Document(response.text)
+    html = doc.summary()
+    soup = BeautifulSoup(html)
+    for script in soup(["script", "style"]):
+        script.decompose()
+    strips = list(soup.stripped_strings)
+    print(strips)
+    return strips
+  
+data=func2(url)
+data2=[]
+data2.append(data)
+print(data2)
+lxr = LexRank(data2, stopwords=STOPWORDS['en'])
+
+#summary with threshold 
+summary = lxr.get_summary(data, summary_size=2, threshold=.1)
+print(summary)
+
+#summary without threshold
+summary_cont = lxr.get_summary(data, threshold=None)
+print(summary_cont)
 
 # making a resource class to get and print url
 class PrintURL(Resource):
