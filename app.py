@@ -60,11 +60,10 @@ def func2(url):
     for script in soup(["script", "style"]):
         script.decompose()
     strips = list(soup.stripped_strings)
-    data=func2(url)
     data2=[]
-    data2.append(data)
+    data2.append(strips)
     lxr = LexRank(data2, stopwords=STOPWORDS['en'])
-    summary = lxr.get_summary(data, summary_size=2, threshold=.1)
+    summary = lxr.get_summary(strips, summary_size=2, threshold=.1)
     return summary
   
 
