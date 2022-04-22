@@ -186,11 +186,18 @@ class PrintURL(Resource):
       data.headers.add('Access-Control-Allow-Origin', '*')
       return data
 
+class PreloadCache(Resource):
 
+  # Corresponds to GET request
+  def get(self, title):
+    print(title)
+    data = jsonify({'title': title})
+    data.headers.add('Access-Control-Allow-Origin', '*')
+    return data
+  
 # adding the defined resources along with their corresponding urls
 api.add_resource(PrintURL, '/url/<string:url>')
-
-
+api.add_resource(PreloadCache, '/cache/<string:title>')
 
 def sentence_similarity(sent1,sent2,stopwords=None):    
   if stopwords is None:        
