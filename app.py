@@ -24,6 +24,13 @@ from transformers import T5Tokenizer, T5ForConditionalGeneration, T5Config
 from flask import Response, json, Flask, jsonify, request
 from flask_restful import Resource, Api
 
+#install DL Libraries (Transformers)
+!pip install transformers
+!pip install bert-extractive-summarizer
+
+
+from summarizer import Summarizer,TransformerSummarizer
+
 from functools import lru_cache
 #import re
 
@@ -101,6 +108,42 @@ def func3(url):
   output = tokenizer.decode(summary_ids[0], skip_special_tokens=True)
   return output
 
+#GPT 2 summarizer
+def func4(url):
+  response = requests.get(url)
+  doc = Document(response.text)
+  html = doc.summary()
+  soup = BeautifulSoup(html)
+  for script in soup(["script", "style"]):
+      script.decompose()
+  strips = list(soup.stripped_strings)
+  to_tokenize = ""
+  for x in strips:
+      to_tokenize += x
+      to_tokenize += " "
+  data=to_tokenize
+  GPT2_model = TransformerSummarizer(transformer_type="GPT2",transformer_model_key="gpt2-medium")
+  gpt_2_summary=''.join(GPT2_model(data, min_length=60))
+  return gpt_2_summary
+  
+# BERT summarizer
+def func5(url):
+  response = requests.get(url)
+  doc = Document(response.text)
+  html = doc.summary()
+  soup = BeautifulSoup(html)
+  for script in soup(["script", "style"]):
+      script.decompose()
+  strips = list(soup.stripped_strings)
+  to_tokenize = ""
+  for x in strips:
+      to_tokenize += x
+      to_tokenize += " "
+  data=to_tokenize
+  data=func3(url)
+  bert_model = Summarizer()
+  bert_summary = ''.join(bert_model(data, min_length=60))
+  return bert_summary
   
 
 # making a resource class to get and print url
