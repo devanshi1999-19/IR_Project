@@ -15,6 +15,8 @@ import re
 # using flask_restful
 from flask import Response, json, Flask, jsonify, request
 from flask_restful import Resource, Api
+
+from functools import lru_cache
 #import re
 
 # creating the flask app
@@ -22,10 +24,34 @@ app = Flask(__name__)
 # creating an API object
 api = Api(app)
 
+
+def read_article(text):        
+  sentences =[]        
+  sentences = sent_tokenize(text)    
+  for sentence in sentences:        
+    sentence.replace("[^a-zA-Z0-9]"," ")     
+  return sentences
+
+@lru_cache(maxsize=50)
+def func(url):
+  response = requests.get(url)
+  doc = Document(response.text)
+  html = doc.summary()
+  soup = BeautifulSoup(html)
+  for script in soup(["script", "style"]):
+      script.decompose()
+  strips = list(soup.stripped_strings)
+  to_tokenize = ""
+  for x in strips:
+      to_tokenize += x
+      to_tokenize += " "
+
+  return summarize_tfidf(to_tokenize, 3)[0]
+
 # making a resource class to get and print url
 class PrintURL(Resource):
 
-	# Corresponds to GET request
+  # Corresponds to GET request
   def get(self, url):
     try:
       url = re.sub('~', '/', url)
@@ -47,12 +73,7 @@ class PrintURL(Resource):
 # adding the defined resources along with their corresponding urls
 api.add_resource(PrintURL, '/url/<string:url>')
 
-def read_article(text):        
-  sentences =[]        
-  sentences = sent_tokenize(text)    
-  for sentence in sentences:        
-    sentence.replace("[^a-zA-Z0-9]"," ")     
-  return sentences
+
 
 def sentence_similarity(sent1,sent2,stopwords=None):    
   if stopwords is None:        
@@ -84,7 +105,7 @@ def build_similarity_matrix(sentences,stop_words):
             similarity_matrix[idx1][idx2] = sentence_similarity(sentences[idx1],sentences[idx2],stop_words)
     return similarity_matrix
     
-def generate_summary(text,top_n):
+def summarize_tfidf(text,top_n):
 #   nltk.download('stopwords')    
 #   nltk.download('punkt')
   stop_words = stopwords.words('english')    
@@ -105,21 +126,9 @@ def generate_summary(text,top_n):
   # Step6 : output the summarized version
   return " ".join(summarize_text),len(sentences)
   
-def func(url):
-    response = requests.get(url)
-    doc = Document(response.text)
-    html = doc.summary()
-    soup = BeautifulSoup(html)
-    for script in soup(["script", "style"]):
-        script.decompose()
-    strips = list(soup.stripped_strings)
-    to_tokenize = ""
-    for x in strips:
-        to_tokenize += x
-        to_tokenize += " "
-    return generate_summary(to_tokenize, 3)[0]
+
 
 # driver function
 if __name__ == '__main__':
 
-	app.run(debug = True)
+  app.run(debug = True)
