@@ -60,22 +60,13 @@ def func2(url):
     for script in soup(["script", "style"]):
         script.decompose()
     strips = list(soup.stripped_strings)
-    print(strips)
-    return strips
+    data=func2(url)
+    data2=[]
+    data2.append(data)
+    lxr = LexRank(data2, stopwords=STOPWORDS['en'])
+    summary = lxr.get_summary(data, summary_size=2, threshold=.1)
+    return summary
   
-data=func2(url)
-data2=[]
-data2.append(data)
-print(data2)
-lxr = LexRank(data2, stopwords=STOPWORDS['en'])
-
-#summary with threshold 
-summary = lxr.get_summary(data, summary_size=2, threshold=.1)
-print(summary)
-
-#summary without threshold
-summary_cont = lxr.get_summary(data, threshold=None)
-print(summary_cont)
 
 # making a resource class to get and print url
 class PrintURL(Resource):
