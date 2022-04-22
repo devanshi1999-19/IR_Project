@@ -14,6 +14,11 @@ from lexrank import LexRank
 from lexrank.mappings.stopwords import STOPWORDS
 from path import Path
 import re
+import torch
+import json 
+from readability.readability import Document
+from bs4 import BeautifulSoup
+from transformers import T5Tokenizer, T5ForConditionalGeneration, T5Config
 
 # using flask_restful
 from flask import Response, json, Flask, jsonify, request
@@ -65,6 +70,37 @@ def func2(url):
     lxr = LexRank(data2, stopwords=STOPWORDS['en'])
     summary = lxr.get_summary(strips, summary_size=2, threshold=.1)
     return summary
+  
+#T5_Algorithm
+def func3(url):
+  model = T5ForConditionalGeneration.from_pretrained('t5-small')
+  tokenizer = T5Tokenizer.from_pretrained('t5-small')
+  device = torch.device('cpu')
+  response = requests.get(url)
+  doc = Document(response.text)
+  html = doc.summary()
+  soup = BeautifulSoup(html)
+  for script in soup(["script", "style"]):
+    script.decompose()
+  strips = list(soup.stripped_strings)
+  to_tokenize = ""
+  for x in strips:
+      to_tokenize += x
+      to_tokenize += " "
+  preprocess_text = to_tokenize.strip().replace("\n","")
+  t5_prepared_Text = "summarize: "+preprocess_text
+  tokenized_text = tokenizer.encode(t5_prepared_Text, return_tensors="pt").to(device)
+  # summmarizing the text 
+  summary_ids = model.generate(tokenized_text,
+                                      num_beams=4,
+                                      no_repeat_ngram_size=2,
+                                      min_length=30,
+                                      max_length=100,
+                                      early_stopping=True)
+
+  output = tokenizer.decode(summary_ids[0], skip_special_tokens=True)
+  return output
+
   
 
 # making a resource class to get and print url
