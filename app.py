@@ -19,6 +19,7 @@ import json
 from readability.readability import Document
 from bs4 import BeautifulSoup
 from transformers import T5Tokenizer, T5ForConditionalGeneration, T5Config
+from gensim.summarization import summarize as gensim_summarize
 
 # using flask_restful
 from flask import Response, json, Flask, jsonify, request
@@ -145,7 +146,25 @@ def func5(url):
   bert_summary = ''.join(bert_model(data, min_length=60))
   return bert_summary
   
-
+# Gensim Summarizer 
+ def func6(url):
+  response = requests.get(url)
+  doc =  Document(response.text)
+  html = doc.summary()
+  soup = BeautifulSoup(html)
+  for script in soup(["script", "style"]):
+      script.decompose()
+  strips = list(soup.stripped_strings)
+  to_tokenize = ""
+  for x in strips:
+      to_tokenize += x
+      to_tokenize += " "
+  data=gensim_summarize(to_tokenize,split= True,word_count = 100)
+  summary = ""
+  for word in data:
+    summary += word
+  return summary
+  
 # making a resource class to get and print url
 class PrintURL(Resource):
 
