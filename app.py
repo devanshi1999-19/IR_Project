@@ -20,19 +20,20 @@ from readability.readability import Document
 from bs4 import BeautifulSoup
 from transformers import T5Tokenizer, T5ForConditionalGeneration, T5Config
 from gensim.summarization import summarize as gensim_summarize
+import urllib
+from requests_html import HTMLSession
 
 # using flask_restful
 from flask import Response, json, Flask, jsonify, request
 from flask_restful import Resource, Api
 
 #install DL Libraries (Transformers)
-!pip install transformers
-!pip install bert-extractive-summarizer
-
 
 from summarizer import Summarizer,TransformerSummarizer
 
 from functools import lru_cache
+
+import sys
 #import re
 
 # creating the flask app
@@ -50,36 +51,46 @@ def read_article(text):
 
 @lru_cache(maxsize=50)
 def func(url):
+  #print(url)
+  #print('_______________________________________')
   response = requests.get(url)
   doc = Document(response.text)
   html = doc.summary()
   soup = BeautifulSoup(html)
   for script in soup(["script", "style"]):
-      script.decompose()
+    script.decompose()
   strips = list(soup.stripped_strings)
   to_tokenize = ""
   for x in strips:
-      to_tokenize += x
-      to_tokenize += " "
+    to_tokenize += x
+    to_tokenize += " "
 
   return summarize_tfidf(to_tokenize, 3)[0]
 
 #LexRank
+@lru_cache(maxsize=50)
 def func2(url):
     response = requests.get(url)
     doc = Document(response.text)
     html = doc.summary()
-    soup = BeautifulSoup(html)
+    soup = BeautifulSoup(html, features="lxml")
     for script in soup(["script", "style"]):
-        script.decompose()
+      script.decompose()
     strips = list(soup.stripped_strings)
     data2=[]
     data2.append(strips)
     lxr = LexRank(data2, stopwords=STOPWORDS['en'])
     summary = lxr.get_summary(strips, summary_size=2, threshold=.1)
-    return summary
+    if(type(summary)==list):
+      summary_str = ""
+      for s in summary:
+        summary_str += s
+        summary_str += " "
+    # print(summary_str)
+    return summary_str
   
 #T5_Algorithm
+@lru_cache(maxsize=50)
 def func3(url):
   model = T5ForConditionalGeneration.from_pretrained('t5-small')
   tokenizer = T5Tokenizer.from_pretrained('t5-small')
@@ -93,8 +104,8 @@ def func3(url):
   strips = list(soup.stripped_strings)
   to_tokenize = ""
   for x in strips:
-      to_tokenize += x
-      to_tokenize += " "
+    to_tokenize += x
+    to_tokenize += " "
   preprocess_text = to_tokenize.strip().replace("\n","")
   t5_prepared_Text = "summarize: "+preprocess_text
   tokenized_text = tokenizer.encode(t5_prepared_Text, return_tensors="pt").to(device)
@@ -110,36 +121,38 @@ def func3(url):
   return output
 
 #GPT 2 summarizer
+@lru_cache(maxsize=50)
 def func4(url):
   response = requests.get(url)
   doc = Document(response.text)
   html = doc.summary()
   soup = BeautifulSoup(html)
   for script in soup(["script", "style"]):
-      script.decompose()
+    script.decompose()
   strips = list(soup.stripped_strings)
   to_tokenize = ""
   for x in strips:
-      to_tokenize += x
-      to_tokenize += " "
+    to_tokenize += x
+    to_tokenize += " "
   data=to_tokenize
   GPT2_model = TransformerSummarizer(transformer_type="GPT2",transformer_model_key="gpt2-medium")
   gpt_2_summary=''.join(GPT2_model(data, min_length=60))
   return gpt_2_summary
   
 # BERT summarizer
+@lru_cache(maxsize=50)
 def func5(url):
   response = requests.get(url)
   doc = Document(response.text)
   html = doc.summary()
   soup = BeautifulSoup(html)
   for script in soup(["script", "style"]):
-      script.decompose()
+    script.decompose()
   strips = list(soup.stripped_strings)
   to_tokenize = ""
   for x in strips:
-      to_tokenize += x
-      to_tokenize += " "
+    to_tokenize += x
+    to_tokenize += " "
   data=to_tokenize
   data=func3(url)
   bert_model = Summarizer()
@@ -147,19 +160,23 @@ def func5(url):
   return bert_summary
   
 # Gensim Summarizer 
- def func6(url):
+@lru_cache(maxsize=50)
+  return
   response = requests.get(url)
   doc =  Document(response.text)
   html = doc.summary()
-  soup = BeautifulSoup(html)
+  soup = BeautifulSoup(html, features="lxml")
   for script in soup(["script", "style"]):
-      script.decompose()
+    script.decompose()
   strips = list(soup.stripped_strings)
   to_tokenize = ""
   for x in strips:
-      to_tokenize += x
-      to_tokenize += " "
-  data=gensim_summarize(to_tokenize,split= True,word_count = 100)
+    to_tokenize += x
+    to_tokenize += ". "
+  try:
+    data=gensim_summarize(to_tokenize,split= True,word_count = 100)
+  except:
+    data = [to_tokenize]
   summary = ""
   for word in data:
     summary += word
@@ -172,11 +189,12 @@ class PrintURL(Resource):
   def get(self, url):
     try:
       url = re.sub('~', '/', url)
-      summary = func(url)
+      summary = func_inp(url)
       whitelist = set('abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890.')
       summary = ''.join(filter(whitelist.__contains__, summary))
       #summary = re.sub('[\W_]+', '', summary)
       data = jsonify({'Summary': summary})
+      # print(summary)
       data.headers.add('Access-Control-Allow-Origin', '*')
       return data
 
@@ -186,13 +204,54 @@ class PrintURL(Resource):
       data.headers.add('Access-Control-Allow-Origin', '*')
       return data
 
+def get_source(url):
+  try:
+    session = HTMLSession()
+    response = session.get(url)
+    return response
+
+  except requests.exceptions.RequestException as e:
+      print(e)
+
+def scrape_google(query):
+
+    query = urllib.parse.quote_plus(query)
+    response = get_source("https://www.google.co.uk/search?q=" + query)
+
+    links = list(response.html.absolute_links)
+    google_domains = ('https://www.google.', 
+                      'https://google.', 
+                      'https://webcache.googleusercontent.', 
+                      'http://webcache.googleusercontent.', 
+                      'https://policies.google.',
+                      'https://support.google.',
+                      'https://www.youtube.com/watch',
+                      'https://maps.google.')
+
+    for url in links[:]:
+        if url.startswith(google_domains):
+            links.remove(url)
+
+    return links
+
 class PreloadCache(Resource):
 
   # Corresponds to GET request
   def get(self, title):
-    print(title)
     data = jsonify({'title': title})
     data.headers.add('Access-Control-Allow-Origin', '*')
+    if " - Google Search" not in title:
+      return data
+    title = re.sub(' - Google Search', '', title)
+    # title = re.sub(' ', '+', title)
+    # title = "https://www.google.com/search?q="+title
+    links = scrape_google(title)
+    print(len(links))
+    #print(*links, sep = "\n")
+    for link in links:
+      func_inp(link)
+      print(link)
+
     return data
   
 # adding the defined resources along with their corresponding urls
@@ -251,8 +310,28 @@ def summarize_tfidf(text,top_n):
   return " ".join(summarize_text),len(sentences)
   
 
-
+func_dict = {
+  1: func,
+  2: func2,
+  3: func3,
+  4: func4,
+  5: func5,
+  6: func6
+}
 # driver function
 if __name__ == '__main__':
+  #print(len(sys.argv))
+  if(len(sys.argv)>1):
+    func_inp = func_dict(int(sys.argv[2]))
+  else:
+    func_inp = func6
 
   app.run(debug = True)
+
+  # func_inp('url')
+
+  # links = scrape_google('ukraine russia')
+  # for link in links:
+  #   print(link)
+  #   print(func6(link))
+  #   print()
