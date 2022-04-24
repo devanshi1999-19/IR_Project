@@ -161,7 +161,7 @@ def func5(url):
   
 # Gensim Summarizer 
 @lru_cache(maxsize=50)
-  return
+def func6(url):
   response = requests.get(url)
   doc =  Document(response.text)
   html = doc.summary()
@@ -194,7 +194,7 @@ class PrintURL(Resource):
       summary = ''.join(filter(whitelist.__contains__, summary))
       #summary = re.sub('[\W_]+', '', summary)
       data = jsonify({'Summary': summary})
-      # print(summary)
+      #print(summary)
       data.headers.add('Access-Control-Allow-Origin', '*')
       return data
 
@@ -226,7 +226,8 @@ def scrape_google(query):
                       'https://policies.google.',
                       'https://support.google.',
                       'https://www.youtube.com/watch',
-                      'https://maps.google.')
+                      'https://maps.google.',
+                      'https://twitter.com/')
 
     for url in links[:]:
         if url.startswith(google_domains):
