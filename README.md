@@ -1,7 +1,7 @@
 ﻿# IR_Project
 
 ## Motivation
-The main goal of this chrome extension extension is to help you get the results you are searching for faster. When you do a google search, the extension will show you the summaries of the articles without the need to open them.
+The main goal of this chrome extension is to help you get the results you are searching for faster. When you do a google search, the extension will show you the summaries of the articles without the need to open them.
 
 ## Installation (Beta Version)
 1. Clone the github repo on your local system.
@@ -22,7 +22,7 @@ Tip: Enter the corresponding number when running the surver to use the algorithm
 
 1. TF-IDF
 2. LexRank
-3. T5 Transfromer
+3. T5 Transformer
 4. GPT-2 
 5. BERT
 6. Gensim
