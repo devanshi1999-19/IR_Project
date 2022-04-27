@@ -1,7 +1,7 @@
 ﻿# IR_Project
 
 ## Motivation
-The main goal of this chrome extension is to help you get the results you are searching for faster. When you do a google search, the extension will show you the summaries of the articles without the need to open them.
+The main goal of this chrome extension is to help you get the information you are searching for faster. When you do a google search, the extension will show you the summaries of the articles without the need to open them.
 
 ## Installation (Beta Version)
 1. Clone the github repo on your local system.
@@ -18,7 +18,7 @@ The main goal of this chrome extension is to help you get the results you are se
 * Seemless integration in your workflow.
 
 ### Algorithms Available
-Tip: Enter the corresponding number when running the surver to use the algorithm of your choice.
+Tip: Enter the corresponding number when running the server to use the algorithm of your choice.
 
 1. TF-IDF
 2. LexRank
